@@ -90,21 +90,21 @@ $$
 实际路网数据中可能存在数据丢失，路网中相邻路段间的流量不可能发生跳变，因此我们可以合理假设相邻路段间的流量变化是平滑的，可以对目标函数加入惩罚因子如下：
 
 $$
-penalty=\frac{1}{2}\Sigma_{i,j=1}^{n}\Arrowvert{u_{i}}-u_{j}\Arrowvert^2W_{ij}
+penalty=\frac{1}{2}\Sigma_{i,j=1}^{n}\parallel{u_{i}}-u_{j}\parallel^2W_{ij}
 $$
 
 对该式子进行化简如下：
 
 $$
 \begin{array}{ll}
-panalty&=\frac{1}{2}\Sigma_{i,j=1}^{n}\Arrowvert{u_{i}}-u_{j}\Arrowvert^2W_{ij}\\
+panalty&=\frac{1}{2}\Sigma_{i,j=1}^{n}\parallel{u_{i}}-u_{j}\parallel^2W_{ij}\\
 & =\Sigma_{i}^{n}u_{i}^{t}u_{i}D_{ii}-\Sigma_{i,j=1}^nu_{i}^Tu_{j}W_{ij}\\
 & =Tr(U^TDU)-Tr(U^TWU)\\
 & =Tr(U^TLU)
 \end{array}
 $$
 
-其中矩阵$L$为图的拉普拉斯矩阵
+其中矩阵$L$为
 
 
 ### 数据集说明
