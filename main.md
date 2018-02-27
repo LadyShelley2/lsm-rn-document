@@ -69,7 +69,42 @@ $$
 arg\min_{U\ge0,B\ge0}J=\parallel{G-UBU^T}\parallel_F^2
 $$
 
+在实际的路网数据中，道路网络是非常稀疏的，节点的平均度数非常小，且可能会出现数据丢失的情况，路网矩阵流量数据为0的路段有可能是两节点之间并无连接，也有可能是数据的丢失，但两种情况是无法区分的。因此为了克服矩阵的稀疏性，只考虑观测到的有值的部分，即流量值$c_{i,j}\gt{0}$的元素。定义指示矩阵$Y$，其中
 
+$$
+Y_{ij}=\left\{
+\begin{array}{l}
+1 & c_{ij}>0\\ 
+2 & c_{ij}=0
+\end{array}
+\right.
+$$
+
+目标函数变为
+$$
+arg\min_{U\ge0,B\ge0}J=\parallel{Y\odot{G}-UBU^T}\parallel_F^2
+$$
+
+其中，$\odot$表示矩阵的哈达马积，满足$(Y\odot{Z})_{ij}=X_{ij}\times{Z_{ij}}$。
+
+实际路网数据中可能存在数据丢失，路网中相邻路段间的流量不可能发生跳变，因此我们可以合理假设相邻路段间的流量变化是平滑的，可以对目标函数加入惩罚因子如下：
+
+$$
+penalty=\frac{1}{2}\Sigma_{i,j=1}^{n}\Arrowvert{u_{i}}-u_{j}\Arrowvert^2W_{ij}
+$$
+
+对该式子进行化简如下：
+
+$$
+\begin{array}{ll}
+panalty&=\frac{1}{2}\Sigma_{i,j=1}^{n}\Arrowvert{u_{i}}-u_{j}\Arrowvert^2W_{ij}\\
+& =\Sigma_{i}^{n}u_{i}^{t}u_{i}D_{ii}-\Sigma_{i,j=1}^nu_{i}^Tu_{j}W_{ij}\\
+& =Tr(U^TDU)-Tr(U^TWU)\\
+& =Tr(U^TLU)
+\end{array}
+$$
+
+其中矩阵$L$为图的拉普拉斯矩阵
 
 
 ### 数据集说明
