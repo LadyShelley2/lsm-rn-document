@@ -66,23 +66,25 @@ $$
 路网中所有节点在隐空间上的映射表示可以表示成矩阵$U_{+}^{n\times{k}}$，我们希望通过隐空间表示矩阵$U$和隐空间属性矩阵$B$还原路网矩阵G，求解$U$和$B$的过程可以看作非负矩阵分解的过程，目标函数定义如下：
 
 $$
-arg\min_{U\ge0,B\ge0}J=\parallel{G-UBU^T}\parallel_F^2
+arg\min_{U\ge{0},B\ge{0}}J=\lVert{G-UBU^T}\lVert_F^2
 $$
+
+#### 路网数据的稀疏性
 
 在实际的路网数据中，道路网络是非常稀疏的，节点的平均度数非常小，且可能会出现数据丢失的情况，路网矩阵流量数据为0的路段有可能是两节点之间并无连接，也有可能是数据的丢失，但两种情况是无法区分的。因此为了克服矩阵的稀疏性，只考虑观测到的有值的部分，即流量值$c_{i,j}\gt{0}$的元素。定义指示矩阵$Y$，其中
 
 $$
 Y_{ij}=\left\{
-\begin{array}{l}
+\begin{array}{ll}
 1 & c_{ij}>0\\ 
-2 & c_{ij}=0
+0 & c_{ij}=0
 \end{array}
 \right.
 $$
 
 目标函数变为
 $$
-arg\min_{U\ge0,B\ge0}J=\parallel{Y\odot{G}-UBU^T}\parallel_F^2
+arg\min_{U\ge{0},B\ge{0}}J=\lVert{Y\odot{G}-UBU^T}\lVert_F^2
 $$
 
 其中，$\odot$表示矩阵的哈达马积，满足$(Y\odot{Z})_{ij}=X_{ij}\times{Z_{ij}}$。
@@ -90,21 +92,102 @@ $$
 实际路网数据中可能存在数据丢失，路网中相邻路段间的流量不可能发生跳变，因此我们可以合理假设相邻路段间的流量变化是平滑的，可以对目标函数加入惩罚因子如下：
 
 $$
-penalty=\frac{1}{2}\Sigma_{i,j=1}^{n}\parallel{u_{i}}-u_{j}\parallel^2W_{ij}
+penalty=\frac{1}{2}\Sigma_{i,j=1}^{n}\lVert{u_{i}}-u_{j}\lVert^2W_{ij}
 $$
 
 对该式子进行化简如下：
 
 $$
 \begin{array}{ll}
-panalty&=\frac{1}{2}\Sigma_{i,j=1}^{n}\parallel{u_{i}}-u_{j}\parallel^2W_{ij}\\
+panalty&=\frac{1}{2}\Sigma_{i,j=1}^{n}\lVert{u_{i}}-u_{j}\lVert^2W_{ij}\\
 & =\Sigma_{i}^{n}u_{i}^{t}u_{i}D_{ii}-\Sigma_{i,j=1}^nu_{i}^Tu_{j}W_{ij}\\
 & =Tr(U^TDU)-Tr(U^TWU)\\
 & =Tr(U^TLU)
 \end{array}
 $$
 
-其中矩阵$L$为
+其中矩阵$L$为图的拉普拉斯矩阵，即$L=D-W$，其中$W$表示图的权重矩阵，即相似度矩阵，在路网中则可看成路网的邻接矩阵。
+
+因此，目标函数化为
+
+$$
+arg\min_{U,B} J=\lVert{Y}\odot(G-UBU^T)\rVert_F^2+\lambda Tr(U^TLU)
+$$
+
+其中
+
+$$
+Y_{ij}=\left\{
+\begin{array}{ll}
+1 & c_{ij}>0\\ 
+0 & c_{ij}=0
+\end{array}
+\right.
+$$
+
+$lambda$为正则项系数。
+
+#### 路网数据的时间相关性
+
+每个时间片下路网会有对应的流量图$G_t$,这些路网数据快照在隐层空间分别映射成对应的隐层空间图表示矩阵$U_t$,同时有对应的指示矩阵$Y_t$，同时隐层属性交互矩阵应属于路网的固有属性，因此我们认为矩阵$B$与时间无关，同理路网的拉普拉斯矩阵$L$与时间也无关。则目标函数可改写如下：
+
+$$
+arg\min_{U,B} J=\Sigma_{t=1}^T{\lVert{Y}\odot(G-UBU^T)\rVert_F^2}+\Sigma_{t=1}^T{\lambda Tr(U^TLU)}
+$$
+
+路网流量数据变化是平滑的，不会出现跳变，可以合理假设相邻时间片的流量数据在隐空间模型上的变化可以通过转移矩阵$A$来刻画，即$U_t=U_{t-1}A$，其中$U\in{R_{+}^{n\times k}}, A\in{R_{+}^k\times{k}}$,通过历史流量数据的变化，可以学习流量转移矩阵$A$，转移矩阵$A$刻画了在时间$1$到时间$T$之间，隐层属性之间相互转化的可能性，如属性$i$经过一个时间片将会有多大可能性转化为属性$j$。在目标函数上添加转移矩阵的惩罚项$\Sigma_{t=2}^T\gamma\lVert{U_t}-U_{t-1}A\rVert_F^2$，目标函数变为
+
+$$
+arg\min_{U,B} J=\Sigma_{t=1}^T{\lVert{Y}\odot(G-UBU^T)\rVert_F^2}+\Sigma_{t=1}^T{\lambda Tr(U^TLU)}+
+\Sigma_{t=2}^T\gamma\lVert{U_t}-U_{t-1}A\rVert_F^2
+$$
+
+其中$\gamma$为正则项系数。
+
+#### 路网流量数据的预测
+
+通过优化目标函数
+
+$$
+arg\min_{U,B} J=\Sigma_{t=1}^T{\lVert{Y}\odot(G-UBU^T)\rVert_F^2}+\Sigma_{t=1}^T{\lambda Tr(U^TLU)}+
+\Sigma_{t=2}^T\gamma\lVert{U_t}-U_{t-1}A\rVert_F^2
+$$
+
+其中$\lambda,\gamma$为正则项系数，可以根据路网的历史流量数据学习到隐层属性矩阵$B$、转移矩阵$A$以及每个时间片路网对应的隐层属性表示矩阵$U_t$，设预测步长为$h$，则有以下式子
+
+$$
+G_{T+h}=(U_TA^h)B(U_TA^h)^T
+$$
+
+### 模型求解
+
+非负矩阵分解的常见求解方式是迭代乘子法[@lee2001algorithms]，模型输入参数为时间$1$到$T$中的路网流量数据快照$G_1,G_2,\ldots,G_T$,指示矩阵$Y_1,Y_2,\ldots,Y_T$,路网相似度矩阵$W$等，学习到的变量有各个时间片对应的隐空间图表示矩阵$U_t$，隐空间属性交互矩阵$B$,转移矩阵$A$,模型求解伪代码如下：
+
+```
+输入：$G_1,G_2,\ldots,G_T$，$Y_1,Y_2,\ldots,Y_T$，$W$
+输出：$U_t(1\le{t}\le{T})$,A,B
+
+1. 初始化$U_t(1\le{t}\le{T})$,A,B；
+2. while 不收敛 do
+3.  for t=1 to T do
+4.    更新$U_t$
+5.  更新 $B$
+6.  更新 $A$
+```
+各变量的更新规则[@deng2016latent]如下：
+
+$$
+(U_t)\leftarrow(U_t)\odot\lgroup\frac{(Y_t\odot{G})(U_tB^T+U_tB)+\lambda{WU_T}+\gamma({U_{t-1}A+U_{t+1}A^T})}{(Y_t\odot{U_tBU_t^T})(U_tB^T+U_tB)+\lambda{DU_t}+\gamma({U_t+U_tAA^T})}\rgroup^\frac{1}{4}
+$$
+
+$$
+B\leftarrow B\odot(\frac{\Sigma_{t=1}^TU_t^T(Y_t\odot{G_t})U_t}{\Sigma_{t=1}^TU_t^T(Y_t\odot(U_tBU_t^T))U_t})
+$$
+
+$$
+A\leftarrow A\odot(\frac{\Sigma_{t=1}^TU_{t-1}^TU_t}{\Sigma_{t=1}^{T}U_{t-1}^TU_{t-1}A})
+$$
+
 
 
 ### 数据集说明
