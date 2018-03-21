@@ -202,6 +202,7 @@ $$
 |  5  | G72 |泉南高速公路|225|
 |  6  | G76 |厦蓉高速公路|234|
 |  7  |G1501|福州绕城高速公路| 68|
+:高速公路信息表{#tbl:road_info}
 
 原始4G信令数据记录字段包括：用户标识（加密）、日期时间、位置区码(LAC)，小区号(Cell Id)，信令类型等字段组成，其中位置区码和小区号唯一确定一个基站。示例数据如下：
 
@@ -243,14 +244,27 @@ $$
 
 |参数|数值设置|默认值|
 |:--:|:------:|:------:|
-|$k$|5,10,15,20,25,30|5|
+|$k$|5,10,15,20,25,30|20|
 |$\lambda$|0.5,1,2,4,8,16|1|
 |$\gamma$|0.5,1,2,4,8,16|1|
 
 实验结果如下：
 
+![k值变化对预测误差的影响1](./images/k_err1_smooth.png){#fig:k_err1_smooth width=600px}
 
-由图？可以看出，隐变量维数越高，预测效果越好。这是因为隐空间维度越高，数据还原误差越小，更容易把握训练数据的规律，从而到达更高的预测准确率。由图？可以看出正则项参数$\lambda,\gamma$对预测结果并无明显影响。
+![k值变化对预测误差的影响2](./images/k_err2_smooth.png){#fig:k_err2_smooth width=600px}
+
+![lambda值变化对预测误差的影响1](./images/lambda_err1_smooth.png){#fig:lambda_err1_smooth width=600px}
+
+![lambda值变化对预测误差的影响2](./images/lambda_err2_smooth.png){#fig:lambda_err2_smooth width=600px}
+
+![gamma值变化对预测误差的影响1](./images/gamma_err1_smooth.png){#fig:gamma_err1_smooth width=600px}
+
+![gamma值变化对预测误差的影响2](./images/gamma_err2_smooth.png){#fig:gamma_err2_smooth width=600px}
+
+
+
+由图 @fig:k_err1_smooth @fig:k_err2_smooth 可观察到随着隐空间维度$k$值的增大，预测误差逐渐减小，这是因为隐空间维度越高，对原始数据的还原能力越高，损失信息越少，因而更容易通过训练数据学习到流量变化的规律。由图 @fig:lambda_err1_smooth @fig:lambda_err2_smooth 可观察到，正则项$\lambda$的变化对结果影响非常小，同理由图 @fig:gamma_err1_smooth , @fig:gamma_err2_smooth 可观察到正则项$\gamma$对结果影响也非常小。根据对参数
 
 
 ##### 训练数据时间跨度
